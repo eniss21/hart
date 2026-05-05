@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+.matplotlib/
+resistivity_output/
+synthetic_output/
+web_runs/
+*.pyc

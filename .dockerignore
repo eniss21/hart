@@ -1,0 +1,11 @@
+.git
+.venv
+__pycache__
+*.pyc
+.DS_Store
+web_runs
+resistivity_output
+*_output
+.tile_cache
+*.xls
+*.xlsx
