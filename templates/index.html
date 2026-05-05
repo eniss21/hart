@@ -1,67 +1,130 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Resistivity Wall Trace Processor</title>
-    <link rel="stylesheet" href="/static/styles.css">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Res to wall</title>
+    <link rel="stylesheet" href="/static/styles.css" />
   </head>
   <body>
     <main class="app-shell">
       <section class="workbench">
         <div class="toolbar">
           <div>
-            <h1>Resistivity Wall Trace Processor</h1>
-            <p>Run the documented log-residual, MAD-threshold, 3D connected-component workflow.</p>
+            <h1>Res to wall</h1>
           </div>
-          <button form="run-form" type="submit" id="run-button">Run Workflow</button>
+          <button form="run-form" type="submit" id="run-button">
+            Run Workflow
+          </button>
         </div>
 
         <form id="run-form" class="control-grid">
           <label class="file-control">
             <span>Input Workbook</span>
-            <input type="file" name="input_file" accept=".xls,.xlsx" required>
+            <input type="file" name="input_file" accept=".xls,.xlsx" required />
           </label>
 
           <label>
             <span>Grid Resolution (m)</span>
-            <input type="number" name="grid_resolution" value="0.55" step="0.1" min="0.05">
+            <input
+              type="number"
+              name="grid_resolution"
+              value="0.55"
+              step="0.1"
+              min="0.05"
+            />
           </label>
           <label>
             <span>Clip Low (%)</span>
-            <input type="number" name="clip_low" value="2" step="0.5" min="0" max="49">
+            <input
+              type="number"
+              name="clip_low"
+              value="2"
+              step="0.5"
+              min="0"
+              max="49"
+            />
           </label>
           <label>
             <span>Clip High (%)</span>
-            <input type="number" name="clip_high" value="98" step="0.5" min="51" max="100">
+            <input
+              type="number"
+              name="clip_high"
+              value="98"
+              step="0.5"
+              min="51"
+              max="100"
+            />
           </label>
           <label>
             <span>Median Size</span>
-            <input type="number" name="median_size" value="3" step="1" min="1">
+            <input
+              type="number"
+              name="median_size"
+              value="3"
+              step="1"
+              min="1"
+            />
           </label>
           <label>
             <span>Gaussian Sigma (m)</span>
-            <input type="number" name="gaussian_sigma_m" value="2.5" step="0.1" min="0.1">
+            <input
+              type="number"
+              name="gaussian_sigma_m"
+              value="2.5"
+              step="0.1"
+              min="0.1"
+            />
           </label>
           <label>
             <span>Robust Z Threshold</span>
-            <input type="number" name="robust_z_threshold" value="2.0" step="0.1" min="0">
+            <input
+              type="number"
+              name="robust_z_threshold"
+              value="2.0"
+              step="0.1"
+              min="0"
+            />
           </label>
           <label>
             <span>Max Extrapolation (m)</span>
-            <input type="number" name="max_extrapolation_distance" value="2.6" step="0.1" min="0.1">
+            <input
+              type="number"
+              name="max_extrapolation_distance"
+              value="2.6"
+              step="0.1"
+              min="0.1"
+            />
           </label>
           <label>
             <span>Min 3D Voxels</span>
-            <input type="number" name="min_component_voxels" value="15" step="1" min="1">
+            <input
+              type="number"
+              name="min_component_voxels"
+              value="15"
+              step="1"
+              min="1"
+            />
           </label>
           <label>
             <span>Min Depth Slices</span>
-            <input type="number" name="min_component_slices" value="2" step="1" min="1">
+            <input
+              type="number"
+              name="min_component_slices"
+              value="2"
+              step="1"
+              min="1"
+            />
           </label>
           <label>
             <span>Min Plan Cells</span>
-            <input type="number" name="min_plan_cells" value="12" step="1" min="1">
+            <input
+              type="number"
+              name="min_plan_cells"
+              value="12"
+              step="1"
+              min="1"
+            />
           </label>
         </form>
       </section>
@@ -78,11 +141,11 @@
         <div class="map-grid">
           <figure>
             <figcaption>Diagnostic anomaly persistence map</figcaption>
-            <img id="anomaly-map" alt="Wall traces with anomaly persistence">
+            <img id="anomaly-map" alt="Wall traces with anomaly persistence" />
           </figure>
           <figure>
             <figcaption>Clean coordinate-grid trace map</figcaption>
-            <img id="clean-map" alt="Wall traces on coordinate grid">
+            <img id="clean-map" alt="Wall traces on coordinate grid" />
           </figure>
         </div>
 
@@ -130,7 +193,8 @@
         wallHead.innerHTML = "";
         wallBody.innerHTML = "";
         if (!rows.length) {
-          wallBody.innerHTML = '<tr><td>No wall traces met the filtering criteria.</td></tr>';
+          wallBody.innerHTML =
+            "<tr><td>No wall traces met the filtering criteria.</td></tr>";
           return;
         }
 
@@ -148,7 +212,8 @@
           columns.forEach((column) => {
             const td = document.createElement("td");
             const value = row[column];
-            td.textContent = typeof value === "number" ? value.toFixed(3) : value;
+            td.textContent =
+              typeof value === "number" ? value.toFixed(3) : value;
             tr.appendChild(td);
           });
           wallBody.appendChild(tr);
