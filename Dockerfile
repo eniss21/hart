@@ -16,7 +16,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt
 
-COPY app.py process_resistivity.py ./
+COPY app.py process_resistivity.py process_resistivity_2d.py ./
 COPY templates ./templates
 COPY static ./static
 
