@@ -44,6 +44,49 @@ body {
   border-bottom: 1px solid var(--line);
 }
 
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.mode-switch {
+  display: inline-flex;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.mode-button {
+  background: transparent;
+  color: var(--ink);
+  border: none;
+  border-radius: 0;
+  padding: 0 14px;
+  min-height: 40px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.mode-button + .mode-button {
+  border-left: 1px solid var(--line);
+}
+
+.mode-button.active {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.mode-description {
+  margin: 0;
+  padding: 12px 20px 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
 h1,
 h2,
 p {

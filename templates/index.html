@@ -14,28 +14,59 @@
             <h1 style="font-size: 42px">REStoWALL</h1>
             <p>archaeo-geophysics Lissus</p>
           </div>
-          <button form="run-form" type="submit" id="run-button">
-            Run Workflow
-          </button>
+          <div class="toolbar-actions">
+            <div class="mode-switch" role="tablist" aria-label="Processing mode">
+              <button
+                type="button"
+                class="mode-button active"
+                data-mode="3d"
+                role="tab"
+                aria-selected="true"
+              >
+                3D depth-cube
+              </button>
+              <button
+                type="button"
+                class="mode-button"
+                data-mode="2d"
+                role="tab"
+                aria-selected="false"
+              >
+                2D plan map
+              </button>
+            </div>
+            <button form="run-form" type="submit" id="run-button">
+              Run Workflow
+            </button>
+          </div>
         </div>
 
+        <p class="mode-description" id="mode-description">
+          3D mode: depth-resolved cube with persistence across slices
+          (Lezha_3D-style workbook with Thellësia/Depth column).
+        </p>
+
         <form id="run-form" class="control-grid">
+          <input type="hidden" name="mode" id="mode-input" value="3d" />
+
           <label class="file-control">
             <span>Input Workbook</span>
             <input type="file" name="input_file" accept=".xls,.xlsx" required />
           </label>
 
-          <label>
+          <label data-modes="3d 2d">
             <span>Grid Resolution (m)</span>
             <input
               type="number"
               name="grid_resolution"
               value="0.55"
-              step="0.1"
+              step="0.05"
               min="0.05"
+              data-default-3d="0.55"
+              data-default-2d="0.5"
             />
           </label>
-          <label>
+          <label data-modes="3d 2d">
             <span>Clip Low (%)</span>
             <input
               type="number"
@@ -46,7 +77,7 @@
               max="49"
             />
           </label>
-          <label>
+          <label data-modes="3d 2d">
             <span>Clip High (%)</span>
             <input
               type="number"
@@ -57,7 +88,7 @@
               max="100"
             />
           </label>
-          <label>
+          <label data-modes="3d 2d">
             <span>Median Size</span>
             <input
               type="number"
@@ -67,7 +98,7 @@
               min="1"
             />
           </label>
-          <label>
+          <label data-modes="3d 2d">
             <span>Gaussian Sigma (m)</span>
             <input
               type="number"
@@ -77,7 +108,7 @@
               min="0.1"
             />
           </label>
-          <label>
+          <label data-modes="3d 2d">
             <span>Robust Z Threshold</span>
             <input
               type="number"
@@ -87,7 +118,7 @@
               min="0"
             />
           </label>
-          <label>
+          <label data-modes="3d 2d">
             <span>Max Extrapolation (m)</span>
             <input
               type="number"
@@ -97,7 +128,7 @@
               min="0.1"
             />
           </label>
-          <label>
+          <label data-modes="3d">
             <span>Min 3D Voxels</span>
             <input
               type="number"
@@ -107,7 +138,7 @@
               min="1"
             />
           </label>
-          <label>
+          <label data-modes="3d">
             <span>Min Depth Slices</span>
             <input
               type="number"
@@ -117,7 +148,7 @@
               min="1"
             />
           </label>
-          <label>
+          <label data-modes="3d 2d">
             <span>Min Plan Cells</span>
             <input
               type="number"
@@ -139,16 +170,7 @@
           <div class="download-row" id="download-row"></div>
         </div>
 
-        <div class="map-grid">
-          <figure>
-            <figcaption>Diagnostic anomaly persistence map</figcaption>
-            <img id="anomaly-map" alt="Wall traces with anomaly persistence" />
-          </figure>
-          <figure>
-            <figcaption>Clean coordinate-grid trace map</figcaption>
-            <img id="clean-map" alt="Wall traces on coordinate grid" />
-          </figure>
-        </div>
+        <div class="map-grid" id="map-grid"></div>
 
         <div class="table-wrap">
           <table>
@@ -168,10 +190,52 @@
       const panel = document.querySelector("#results-panel");
       const statusLine = document.querySelector("#status-line");
       const downloadRow = document.querySelector("#download-row");
-      const anomalyMap = document.querySelector("#anomaly-map");
-      const cleanMap = document.querySelector("#clean-map");
+      const mapGrid = document.querySelector("#map-grid");
       const wallHead = document.querySelector("#wall-head");
       const wallBody = document.querySelector("#wall-body");
+      const modeInput = document.querySelector("#mode-input");
+      const modeDescription = document.querySelector("#mode-description");
+      const modeButtons = document.querySelectorAll(".mode-button");
+
+      const MODE_DESCRIPTIONS = {
+        "3d":
+          "3D mode: depth-resolved cube with persistence across slices " +
+          "(Lezha_3D-style workbook with Thellësia/Depth column).",
+        "2d":
+          "2D mode: single plan map (Piketa, Profili, East, North, Rd). " +
+          "Logic identical to the 3D anomaly-enhancement chain - log10, P2-P98 " +
+          "clipping, 0.5 m grid, 3x3 median, sigma=2.5 m background, robust Z>2.0.",
+      };
+
+      function applyMode(mode) {
+        modeInput.value = mode;
+        modeButtons.forEach((b) => {
+          const isActive = b.dataset.mode === mode;
+          b.classList.toggle("active", isActive);
+          b.setAttribute("aria-selected", isActive ? "true" : "false");
+        });
+        modeDescription.textContent = MODE_DESCRIPTIONS[mode];
+
+        document.querySelectorAll("[data-modes]").forEach((el) => {
+          const modes = el.dataset.modes.split(/\s+/);
+          const visible = modes.includes(mode);
+          el.hidden = !visible;
+          const input = el.querySelector("input");
+          if (input) {
+            input.disabled = !visible;
+            const def = input.dataset[`default${mode === "3d" ? "3d" : "2d"}`];
+            if (visible && def !== undefined) {
+              input.value = def;
+            }
+          }
+        });
+      }
+
+      modeButtons.forEach((b) => {
+        b.addEventListener("click", () => applyMode(b.dataset.mode));
+      });
+
+      applyMode("3d");
 
       function setBusy(isBusy) {
         button.disabled = isBusy;
@@ -187,6 +251,21 @@
           link.className = "download-link";
           link.target = "_blank";
           downloadRow.appendChild(link);
+        });
+      }
+
+      function renderMaps(maps) {
+        mapGrid.innerHTML = "";
+        maps.forEach((map) => {
+          const figure = document.createElement("figure");
+          const caption = document.createElement("figcaption");
+          caption.textContent = map.caption;
+          const img = document.createElement("img");
+          img.alt = map.caption;
+          img.src = `${map.url}?v=${Date.now()}`;
+          figure.appendChild(caption);
+          figure.appendChild(img);
+          mapGrid.appendChild(figure);
         });
       }
 
@@ -237,9 +316,11 @@
             throw new Error(payload.error || "Processing failed.");
           }
 
-          statusLine.textContent = `${payload.wall_count} possible wall trace(s) retained after 3D cleaning and plan filtering.`;
-          anomalyMap.src = `${payload.files["wall_traces_with_anomalies.png"]}?v=${Date.now()}`;
-          cleanMap.src = `${payload.files["wall_traces_coordinate_grid_only.png"]}?v=${Date.now()}`;
+          const modeLabel = payload.mode === "2d" ? "2D plan-map" : "3D depth-cube";
+          statusLine.textContent =
+            `${payload.wall_count} possible wall trace(s) retained ` +
+            `(${modeLabel} workflow).`;
+          renderMaps(payload.maps || []);
           renderDownloads(payload.files);
           renderTable(payload.walls);
           panel.hidden = false;
