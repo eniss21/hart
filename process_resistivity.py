@@ -69,6 +69,24 @@ def detect_columns(df: pd.DataFrame) -> tuple[str, str, str, str]:
     first, followed by case-insensitive variants.
     """
 
+    if len(df.columns) == 7:
+        original_columns = list(df.columns)
+        df.columns = [
+            "Profili",
+            "Piketa",
+            "Depth",
+            "Rd",
+            "SP",
+            "N",
+            "E",
+        ]
+        print(
+            "Using positional 3D schema: "
+            "Profili, Piketa/PK, Depth, Rd, SP, N, E. "
+            f"Original headers were: {original_columns}"
+        )
+        return "E", "N", "Depth", "Rd"
+
     df.columns = [_normalize_name(c) for c in df.columns]
     columns = list(df.columns)
     lower_lookup = {c.lower(): c for c in columns}

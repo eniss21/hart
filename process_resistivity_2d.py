@@ -63,6 +63,27 @@ class Parameters2D:
 
 
 REQUIRED_COLUMNS = ("Piketa", "Profili", "East", "North")
+POSITIONAL_COLUMNS = ("Piketa", "Profili", "East", "North", "rho_ohm_m")
+COMPONENT_COLUMNS = [
+    "component_id",
+    "cells",
+    "area_m2",
+    "start_E",
+    "start_N",
+    "end_E",
+    "end_N",
+    "length_m",
+    "local_x_min",
+    "local_x_max",
+    "local_y_min",
+    "local_y_max",
+    "z_max",
+    "z_mean",
+    "residual_log10_max",
+    "resistivity_ratio_max",
+    "edge_caution",
+    "interpretation",
+]
 
 
 def _read_excel(path: Path) -> pd.DataFrame:
@@ -104,6 +125,24 @@ def _ensure_required_columns(df: pd.DataFrame) -> None:
         )
 
 
+def _apply_positional_schema(raw: pd.DataFrame) -> pd.DataFrame:
+    """Use the hardcoded 2D order, ignoring source header names."""
+
+    if len(raw.columns) < len(POSITIONAL_COLUMNS):
+        raise ValueError(
+            "2D positional input needs at least 5 columns in this order: "
+            "Piketa, Profili, East, North, Rd."
+        )
+    original_columns = list(raw.columns[: len(POSITIONAL_COLUMNS)])
+    df = raw.iloc[:, : len(POSITIONAL_COLUMNS)].copy()
+    df.columns = list(POSITIONAL_COLUMNS)
+    print(
+        "Using positional 2D schema: Piketa, Profili, East, North, Rd. "
+        f"Original headers were: {original_columns}"
+    )
+    return df
+
+
 def run_workflow(
     input_file: Path,
     output_folder: Path,
@@ -135,14 +174,7 @@ def run_workflow(
     # --- Load and clean -----------------------------------------------------
     raw = _read_excel(Path(input_file))
     raw.columns = [str(c).strip() for c in raw.columns]
-
-    rho_col = _detect_resistivity_column(raw)
-    if rho_col != "rho_ohm_m":
-        raw = raw.rename(columns={rho_col: "rho_ohm_m"})
-
-    _ensure_required_columns(raw)
-
-    df = raw[["Piketa", "Profili", "East", "North", "rho_ohm_m"]].copy()
+    df = _apply_positional_schema(raw)
     for col in df.columns:
         df[col] = pd.to_numeric(df[col], errors="coerce")
     df = df.dropna(subset=list(df.columns)).copy()
@@ -256,7 +288,7 @@ def run_workflow(
         )
         kept_label_ids.append(cid)
     components_df = (
-        pd.DataFrame(components)
+        pd.DataFrame(components, columns=COMPONENT_COLUMNS)
         .sort_values(["z_max", "area_m2"], ascending=False)
         .reset_index(drop=True)
     )
